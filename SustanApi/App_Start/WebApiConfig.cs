@@ -3,8 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Web.Http;
+using System.Web.Http.Cors;
 using Microsoft.Owin.Security.OAuth;
 using Newtonsoft.Json.Serialization;
+using SustanApi.Repository;
+using SustanApi.Repository.Interfaces;
+using SustanApi.Resolver;
+using Unity;
+using Unity.Lifetime;
 
 namespace SustanApi
 {
@@ -25,6 +31,17 @@ namespace SustanApi
                 routeTemplate: "api/{controller}/{id}",
                 defaults: new { id = RouteParameter.Optional }
             );
+
+            // Cors
+            var cors = new EnableCorsAttribute("*", "*", "*");
+            config.EnableCors(cors);
+
+            // Unity
+            var container = new UnityContainer();
+            container.RegisterType<IApartmentRepository, ApartmentRepo>(new HierarchicalLifetimeManager());
+            config.DependencyResolver = new UnityResolver(container);
+            container.RegisterType<IBuildingRepository, BuildingRepo>(new HierarchicalLifetimeManager());
+            config.DependencyResolver = new UnityResolver(container);
         }
     }
 }
