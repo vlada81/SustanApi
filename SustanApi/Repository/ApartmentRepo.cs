@@ -19,9 +19,9 @@ namespace SustanApi.Repository
             this.db = db;
         }
 
-        public IQueryable<Apartment> GetAll()
+        public IEnumerable<Apartment> GetAll()
         {
-            return db.Apartments.Include(a => a.Building).Include(a => a.User);
+            return db.Apartments.Include(b => b.Building);
         }
 
         public async Task<Apartment> GetById(int? id)
@@ -79,14 +79,14 @@ namespace SustanApi.Repository
             GC.SuppressFinalize(this);
         }
 
-        public IQueryable<Building> GetBuildings()
-        {
-            return db.Buildings;
-        }
+        //public IQueryable<Building> GetBuildings()
+        //{
+        //    return db.Buildings;
+        //}
 
-        public IQueryable<ApplicationUser> GetUsers()
-        {
-            return db.Users;
-        }
+        //public IQueryable<ApplicationUser> GetUsers()
+        //{
+        //    return db.Users;
+        //}
     }
 }

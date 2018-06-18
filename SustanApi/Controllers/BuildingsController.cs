@@ -1,4 +1,5 @@
 ﻿using SustanApi.Models;
+using SustanApi.Repository;
 using SustanApi.Repository.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -15,6 +16,11 @@ namespace SustanApi.Controllers
     public class BuildingsController : ApiController
     {
         private IBuildingRepository _repository { get; set; }
+
+        public BuildingsController()
+        {
+            _repository = new BuildingRepo(new ApplicationDbContext());
+        }
 
         public BuildingsController(IBuildingRepository repository)
         {
@@ -87,7 +93,7 @@ namespace SustanApi.Controllers
 
             }
 
-            return StatusCode(HttpStatusCode.NoContent);
+            return Ok(building);
         }
 
         // DELETE: api/Buildings/5
@@ -102,7 +108,7 @@ namespace SustanApi.Controllers
 
             await _repository.Delete(building);
 
-            return Ok(building);
+            return StatusCode(HttpStatusCode.NoContent);
         }
 
 

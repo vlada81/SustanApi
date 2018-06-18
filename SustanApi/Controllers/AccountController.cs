@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity.Infrastructure;
+using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -13,21 +16,33 @@ using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using Microsoft.Owin.Security.Cookies;
 using Microsoft.Owin.Security.OAuth;
+using SustanApi.Extensions;
 using SustanApi.Models;
 using SustanApi.Providers;
+using SustanApi.Repository;
+using SustanApi.Repository.Interfaces;
 using SustanApi.Results;
+using SustanApi.ViewModels;
 
 namespace SustanApi.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [RoutePrefix("api/Account")]
     public class AccountController : ApiController
     {
         private const string LocalLoginProvider = "Local";
         private ApplicationUserManager _userManager;
 
+        private IApartmentRepository _repository { get; set; }
+
         public AccountController()
         {
+            _repository = new ApartmentRepo(new ApplicationDbContext());
+        }
+
+        public AccountController(IApartmentRepository repository)
+        {
+            _repository = repository;
         }
 
         public AccountController(ApplicationUserManager userManager,
@@ -125,7 +140,7 @@ namespace SustanApi.Controllers
 
             IdentityResult result = await UserManager.ChangePasswordAsync(User.Identity.GetUserId(), model.OldPassword,
                 model.NewPassword);
-            
+
             if (!result.Succeeded)
             {
                 return GetErrorResult(result);
@@ -258,9 +273,9 @@ namespace SustanApi.Controllers
             if (hasRegistered)
             {
                 Authentication.SignOut(DefaultAuthenticationTypes.ExternalCookie);
-                
-                 ClaimsIdentity oAuthIdentity = await user.GenerateUserIdentityAsync(UserManager,
-                    OAuthDefaults.AuthenticationType);
+
+                ClaimsIdentity oAuthIdentity = await user.GenerateUserIdentityAsync(UserManager,
+                   OAuthDefaults.AuthenticationType);
                 ClaimsIdentity cookieIdentity = await user.GenerateUserIdentityAsync(UserManager,
                     CookieAuthenticationDefaults.AuthenticationType);
 
@@ -328,7 +343,15 @@ namespace SustanApi.Controllers
                 return BadRequest(ModelState);
             }
 
-            var user = new ApplicationUser() { UserName = model.Email, Email = model.Email };
+            var user = new ApplicationUser()
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                RegistrationDate = DateTime.Now,
+                EmailConfirmed = true
+            };
 
             IdentityResult result = await UserManager.CreateAsync(user, model.Password);
 
@@ -368,7 +391,7 @@ namespace SustanApi.Controllers
             result = await UserManager.AddLoginAsync(user.Id, info.Login);
             if (!result.Succeeded)
             {
-                return GetErrorResult(result); 
+                return GetErrorResult(result);
             }
             return Ok();
         }
@@ -490,5 +513,199 @@ namespace SustanApi.Controllers
         }
 
         #endregion
+
+
+        //Prikaz liste korisnika
+        // GET : api/Account/Users
+        //[Authorize(Roles = "Admin")]
+        [Route("Users")]
+        public async Task<IHttpActionResult> GetUsers()
+        {
+            var users = new List<UserViewModel>();
+            if (users == null)
+            {
+                return NotFound();
+            }
+
+            await users.GetUsers();
+
+            return Ok(users);
+        }
+
+
+        // POST: api/Account/Post
+        [Authorize(Roles = "Admin")]
+        public async Task<IHttpActionResult> Post(RegisterBindingModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = new ApplicationUser()
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                RegistrationDate = DateTime.Now,
+                EmailConfirmed = true
+            };
+
+            IdentityResult result = await UserManager.CreateAsync(user, model.Password);
+
+            if (!result.Succeeded)
+            {
+                return GetErrorResult(result);
+            }
+
+            return Ok();
+        }
+
+        // GET: api/Account/5
+        [Authorize(Roles = "Admin")]
+        public async Task<IHttpActionResult> GetById(string id)
+        {
+            if (id == null || id.Equals(string.Empty))
+            {
+                return BadRequest();
+            }
+
+            ApplicationUser user = await UserManager.FindByIdAsync(id);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var model = new UserViewModel
+            {
+                Id = user.Id,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Password = user.PasswordHash,
+                RegistrationDate = user.RegistrationDate
+            };
+
+            return Ok(model);
+        }
+
+        // PUT: api/Account/Put
+        [Authorize(Roles = "Admin")]
+        public async Task<IHttpActionResult> Put(UserViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
+            try
+            {
+                if (model == null)
+                {
+                    return BadRequest();
+                }
+
+                if (ModelState.IsValid)
+                {
+                    var user = await UserManager.FindByIdAsync(model.Id);
+                    if (user != null)
+                    {
+                        user.Email = model.Email;
+                        user.FirstName = model.FirstName;
+                        user.LastName = model.LastName;
+                        if (!user.PasswordHash.Equals(model.Password))
+                        {
+                            user.PasswordHash = UserManager.PasswordHasher.HashPassword(model.Password);
+                        }
+
+                        var result = await UserManager.UpdateAsync(user);
+
+                        if (!result.Succeeded)
+                        {
+                            return GetErrorResult(result);
+                        }
+
+                        return Ok();
+                    }
+                }
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw;
+            }
+
+            return Ok(model);
+        }
+
+        //DELETE: api/Account/5
+        [Authorize(Roles = "Admin")]
+        public async Task<IHttpActionResult> Delete(UserViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
+            try
+            {
+                if (model == null)
+                {
+                    return BadRequest();
+                }
+
+                if (ModelState.IsValid)
+                {
+                    var db = new ApplicationDbContext();
+
+                    var user = await UserManager.FindByIdAsync(model.Id);
+
+                    foreach (var apartment in db.Apartments.Where(a => a.UserId == user.Id))
+                    {
+                        if (apartment.UserId != null)
+                        {
+                            apartment.UserId = null;
+                            _repository.Update(apartment);
+
+                            try
+                            {
+                                await _repository.Save();
+                            }
+                            catch (Exception)
+                            {
+                                if (!_repository.Exists(apartment.Id))
+                                {
+                                    return NotFound();
+                                }
+                                else
+                                {
+                                    throw;
+                                }
+                                
+                            }
+                        }
+                    }
+
+                    var result = await UserManager.DeleteAsync(user);
+
+                    if (result.Succeeded)
+                    {
+                        await db.SaveChangesAsync();
+                    }
+
+                    GetErrorResult(result);
+
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
+            return StatusCode(HttpStatusCode.NoContent);
+        }
+
     }
 }

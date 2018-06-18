@@ -268,12 +268,13 @@
     <Compile Include="Controllers\BuildingsController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
+    <Compile Include="Extensions\IdentityExtensions.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201806131939138_Initial.cs" />
-    <Compile Include="Migrations\201806131939138_Initial.Designer.cs">
-      <DependentUpon>201806131939138_Initial.cs</DependentUpon>
+    <Compile Include="Migrations\201806172033277_Initial.cs" />
+    <Compile Include="Migrations\201806172033277_Initial.Designer.cs">
+      <DependentUpon>201806172033277_Initial.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountBindingModels.cs" />
@@ -290,7 +291,7 @@
     <Compile Include="Resolver\UnityResolver.cs" />
     <Compile Include="Results\ChallengeResult.cs" />
     <Compile Include="Startup.cs" />
-    <Compile Include="ViewModels\ApartmentBuildingViewModel.cs" />
+    <Compile Include="ViewModels\UserViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Areas\HelpPage\HelpPage.css" />
@@ -384,8 +385,8 @@
     <Content Include="Scripts\jquery-3.3.1.min.map" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\201806131939138_Initial.resx">
-      <DependentUpon>201806131939138_Initial.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201806172033277_Initial.resx">
+      <DependentUpon>201806172033277_Initial.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

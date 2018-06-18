@@ -13,7 +13,7 @@ namespace SustanApi.Migrations
         
         string IMigrationMetadata.Id
         {
-            get { return "201806131939138_Initial"; }
+            get { return "201806172033277_Initial"; }
         }
         
         string IMigrationMetadata.Source

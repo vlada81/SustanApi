@@ -10,7 +10,7 @@ namespace SustanApi.Repository.Interfaces
 {
     public interface IApartmentRepository
     {
-        IQueryable<Apartment> GetAll();
+        IEnumerable<Apartment> GetAll();
         Task<Apartment> GetById(int? id);
         IQueryable<Apartment> GetApartmentsByUserId(string id);
         Task Create(Apartment apartment);
@@ -19,7 +19,7 @@ namespace SustanApi.Repository.Interfaces
         Task Save();
         bool Exists(int? id);
 
-        IQueryable<Building> GetBuildings();
-        IQueryable<ApplicationUser> GetUsers();
+        //IQueryable<Building> GetBuildings();
+        //IQueryable<ApplicationUser> GetUsers();
     }
 }

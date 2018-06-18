@@ -11,13 +11,20 @@ using System.Web.Http;
 using System.Web.Http.Description;
 using Microsoft.AspNet.Identity;
 using SustanApi.Models;
+using SustanApi.Repository;
 using SustanApi.Repository.Interfaces;
 
 namespace SustanApi.Controllers
 {
+    //[Authorize]
     public class ApartmentsController : ApiController
     {
         private IApartmentRepository _repository { get; set; }
+
+        public ApartmentsController()
+        {
+            _repository = new ApartmentRepo(new ApplicationDbContext());
+        }
 
         public ApartmentsController(IApartmentRepository repository)
         {
@@ -25,12 +32,16 @@ namespace SustanApi.Controllers
         }
 
         // GET: api/Apartments
-        public IQueryable<Apartment> GetApartments()
+        //[ResponseType(typeof(Apartment))]
+        [AllowAnonymous]
+        public IEnumerable<Apartment> GetApartments()
         {
             return _repository.GetAll();
         }
 
         // GET: api/Apartments/List
+        [ResponseType(typeof(Apartment))]
+        [Route("user")]
         public IQueryable<Apartment> GetApartmentsByUserId()
         {
             var currentUser = User.Identity.GetUserId();
@@ -97,7 +108,7 @@ namespace SustanApi.Controllers
                 }
             }
 
-            return StatusCode(HttpStatusCode.NoContent);
+            return Ok(apartment);
         }
 
         // DELETE: api/Apartments/5
@@ -112,7 +123,7 @@ namespace SustanApi.Controllers
 
             await _repository.Delete(apartment);
 
-            return Ok(apartment);
+            return StatusCode(HttpStatusCode.NoContent);
         }
     }
 }
